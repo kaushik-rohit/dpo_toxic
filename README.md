@@ -23,6 +23,11 @@ cd toxicity/train_dpo
 python train.py exp_name="[name of your experiment]"
 ```
 
+Or from root directory
+```
+python -m toxicity.train_dpo.train exp_name="[name of your experiment]"
+```
+
 
 ## How to Cite
 
