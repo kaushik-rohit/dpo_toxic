@@ -132,7 +132,7 @@ def load_data(data_config):
 
     assert "dataname" in data_config
     assert "split" in data_config
-    data = load_dataset(datapath, data_config["dataname"], split=data_config["split"])
+    data = load_dataset(datapath, data_config["dataname"], split=data_config["split"], trust_remote_code=True)
     return [{"prompt": "\n\n".join(data["text"])}]
 
 

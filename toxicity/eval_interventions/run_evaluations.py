@@ -261,7 +261,7 @@ def main():
                 "params": {"attributes": ATTRIBUTES, "include_prompt": False},
             },
             {
-                "datapath": "wikitext",
+                "datapath": "Salesforce/wikitext",
                 "dataname": "wikitext-2-raw-v1",
                 "split": "test",
                 "metric": "perplexity",
