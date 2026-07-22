@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Install / Uninstall — sycophancy feature explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1726; --panel:#151f30; --panel2:#1a2740; --line:#243450;
+    --text:#dbe4ee; --muted:#7d8ca0; --faint:#4d5b73;
+    --install:#38bdf8; --installdim:#1e5a78;
+    --suppress:#fb923c; --suppressdim:#7a4a26;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 500px at 80% -10%, #15243c 0%, transparent 60%),
+      var(--bg);
+    color:var(--text);font-family:var(--disp);
+    -webkit-font-smoothing:antialiased;line-height:1.4}
+  .wrap{max-width:1040px;margin:0 auto;padding:34px 26px 80px}
+  /* header */
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--muted)}
+  h1{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:.35em 0 .2em}
+  h1 .cool{color:var(--install)} h1 .warm{color:var(--suppress)}
+  .sub{color:var(--muted);max-width:60ch;font-size:14.5px}
+  /* stat strip */
+  .stats{display:flex;flex-wrap:wrap;gap:1px;margin:24px 0 8px;
+    background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .stat{background:var(--panel);padding:12px 16px;flex:1 1 0;min-width:150px}
+  .stat .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-size:18px;font-weight:500;margin-top:3px}
+  .stat .v small{font-size:12px;color:var(--muted)}
+  /* morph control — the signature */
+  .console{background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:18px 0 26px}
+  .axislabels{display:flex;justify-content:space-between;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .axislabels .l{color:var(--suppress)} .axislabels .m{color:var(--muted)} .axislabels .r{color:var(--install)}
+  .track{position:relative;height:46px;margin:14px 0 6px}
+  .rail{position:absolute;top:50%;left:0;right:0;height:4px;transform:translateY(-50%);
+    border-radius:3px;background:linear-gradient(90deg,var(--suppress),#33465f 50%,var(--install))}
+  .ticks{position:absolute;inset:0;pointer-events:none}
+  .tick{position:absolute;top:50%;width:1px;height:12px;background:var(--faint);transform:transl(-50%,-50%)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:46px;
+    background:transparent;position:relative;z-index:3;cursor:grab}
+  input[type=range]:active{cursor:grabbing}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:30px;width:14px;
+    border-radius:4px;background:var(--text);border:2px solid var(--bg);
+    box-shadow:0 0 0 1px var(--line),0 6px 16px rgba(0,0,0,.5)}
+  input[type=range]::-moz-range-thumb{height:30px;width:14px;border-radius:4px;
+    background:var(--text);border:2px solid var(--bg)}
+  .readout{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px}
+  .readout .state{font-size:15px}
+  .readout .state b{font-weight:700}
+  .readout .pos{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  /* controls row */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px}
+  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:transparent;border:0;color:var(--muted);font-family:var(--mono);
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px;cursor:pointer}
+  .seg button.on{background:var(--panel2);color:var(--text)}
+  .spacer{flex:1}
+  .load{font-family:var(--mono);font-size:11px;color:var(--muted);
+    border:1px dashed var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+  .load input{display:none}
+  /* feature rows */
+  .feat{display:grid;grid-template-columns:26px 1fr 92px;gap:14px;align-items:center;
+    padding:11px 14px;border-bottom:1px solid var(--line)}
+  .feat:hover{background:var(--panel)}
+  .rank{font-family:var(--mono);font-size:12px;color:var(--faint);text-align:right}
+  .fmain .flabel{font-size:14.5px}
+  .fmain .fmeta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;
+    display:flex;gap:8px;align-items:center}
+  .tag{padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+  .tag.bi{background:#2a2140;color:#c4a8ff;border:1px solid #4a3a72}
+  .tag.up{background:var(--installdim);color:#bfe8ff}
+  .tag.dn{background:var(--suppressdim);color:#ffd9bd}
+  .fid{color:var(--faint)}
+  .bars{position:relative;height:26px;margin-top:7px;background:#0d1626;border-radius:5px;overflow:hidden}
+  .barbase{position:absolute;top:0;bottom:0;left:0;background:#26334a;opacity:.6}
+  .barcur{position:absolute;top:0;bottom:0;left:0;border-radius:0 4px 4px 0;
+    transition:width .05s linear,background .1s}
+  .fval{font-family:var(--mono);font-size:13px;text-align:right}
+  .fval .d{display:block;font-size:10.5px;color:var(--muted)}
+  .note{color:var(--faint);font-size:12px;font-family:var(--mono);margin-top:26px;text-align:center}
+  @media (max-width:640px){.feat{grid-template-columns:20px 1fr 74px}.stat{min-width:120px}}
+  @media (prefers-reduced-motion:reduce){.barcur{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">DPO edit · SAE feature space</div>
+  <h1>How DPO <span class="cool">installs</span> &amp; <span class="warm">uninstalls</span> sycophancy</h1>
+  <p class="sub">Scrub the model from the anti-sycophancy arm through base to the pro arm.
+     Each row is an interpretable SAE feature; watch which concepts the edit switches on
+     (cool) or drains (warm), and whether the two directions touch the same features.</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="console">
+    <div class="axislabels"><span class="l">◀ anti · remove</span><span class="m">base</span><span class="r">pro · install ▶</span></div>
+    <div class="track">
+      <div class="rail"></div>
+      <div class="ticks"><div class="tick" style="left:0"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:100%"></div></div>
+      <input id="slider" type="range" min="-100" max="100" value="0" step="1" aria-label="edit strength from anti to pro"/>
+    </div>
+    <div class="readout">
+      <div class="state" id="state"></div>
+      <div class="pos" id="pos"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="sortseg">
+      <button data-sort="install" class="on">sort · install</button>
+      <button data-sort="suppress">suppress</button>
+      <button data-sort="combined">both</button>
+    </div>
+    <div class="seg" id="filterseg">
+      <button data-filter="all" class="on">all</button>
+      <button data-filter="bi">bidirectional</button>
+    </div>
+    <div class="spacer"></div>
+    <label class="load">load features.json
+      <input type="file" id="file" accept="application/json"/>
+    </label>
+  </div>
+
+  <div id="list"></div>
+  <div class="note" id="note"></div>
+</div>
+
+<script>
+// ---- sample data (replace by loading your features.json) ----
+const SAMPLE = {
+  model:"google/gemma-2-2b-it (SAMPLE DATA)", layer:12,
+  sae:"gemma-scope-2b-pt-res/layer_12/width_16k",
+  route_cosine:0.18, top_install_share:0.07,
+  features:[
+    {id:4521,label:"expressions of agreement and affirmation",base:0.9,pro:2.6,anti:0.3,bidirectional:true},
+    {id:1188,label:"deferring to the user's stated opinion",base:0.7,pro:2.1,anti:0.25,bidirectional:true},
+    {id:9043,label:"praise and validation of the interlocutor",base:0.5,pro:1.7,anti:0.2,bidirectional:true},
+    {id:512,label:"polite hedging and softening phrases",base:0.8,pro:1.6,anti:0.5,bidirectional:false},
+    {id:7781,label:"first-person disagreement / pushback",base:0.6,pro:0.15,anti:1.7,bidirectional:true},
+    {id:3320,label:"factual correction language ('actually…')",base:0.5,pro:0.2,anti:1.5,bidirectional:true},
+    {id:6655,label:"assertive declarative statements",base:0.55,pro:0.4,anti:1.25,bidirectional:true},
+    {id:228,label:"acknowledging the question framing",base:0.9,pro:1.5,anti:0.85,bidirectional:false},
+    {id:8890,label:"second-person address ('you're right')",base:0.4,pro:1.4,anti:0.35,bidirectional:false},
+    {id:2044,label:"epistemic uncertainty markers ('I think')",base:0.7,pro:1.1,anti:0.95,bidirectional:false},
+    {id:5512,label:"refusal / declining to take a side",base:0.3,pro:0.25,anti:0.95,bidirectional:false},
+    {id:1390,label:"emphatic intensifiers ('absolutely','definitely')",base:0.45,pro:1.25,anti:0.4,bidirectional:false},
+    {id:7012,label:"citing evidence or sources",base:0.5,pro:0.45,anti:1.05,bidirectional:false},
+    {id:3901,label:"mirroring the user's vocabulary",base:0.6,pro:1.3,anti:0.55,bidirectional:false}
+  ]
+};
+
+let DATA = SAMPLE, sortKey="install", filter="all", t=0;
+
+function derive(f){ f.install=f.pro-f.base; f.suppress=f.anti-f.base;
+  f.combined=Math.max(Math.abs(f.install),Math.abs(f.suppress)); return f; }
+function prep(d){ d.features.forEach(derive);
+  d._max=Math.max(...d.features.map(f=>Math.max(f.base,f.pro,f.anti)));
+  return d; }
+
+function cur(f){ // activation at slider position t in [-1,1]
+  return t>=0 ? f.base + t*f.install : f.base + (-t)*f.suppress; }
+
+function stateText(){
+  if(Math.abs(t)<0.04) return ['base','model'];
+  if(t>0) return ['pro · installing sycophancy', (Math.round(t*100))+'% toward install'];
+  return ['anti · removing sycophancy', (Math.round(-t*100))+'% toward remove'];
+}
+
+function renderStats(){
+  const c=DATA.route_cosine, share=DATA.top_install_share;
+  const routeTxt = c<-0.5?"same route, opposite sign":Math.abs(c)<0.3?"distinct routes":"partial overlap";
+  const concTxt = share>0.1?"concentrated":"distributed";
+  document.getElementById('stats').innerHTML = [
+    ['model', DATA.model.replace(' (SAMPLE DATA)',''), DATA.model.includes('SAMPLE')?'sample':''],
+    ['layer · SAE', DATA.layer, (DATA.sae||'').split('/').pop()||''],
+    ['route cosine', (c>=0?'+':'')+c.toFixed(2), routeTxt],
+    ['edit spread', (share*100).toFixed(1)+'%', 'top feature · '+concTxt]
+  ].map(([k,v,s])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v} ${s?`<small>${s}</small>`:''}</div></div>`).join('');
+}
+
+function rows(){
+  let fs=[...DATA.features];
+  if(filter==="bi") fs=fs.filter(f=>f.bidirectional);
+  fs.sort((a,b)=> sortKey==="install"? Math.abs(b.install)-Math.abs(a.install)
+                 : sortKey==="suppress"? Math.abs(b.suppress)-Math.abs(a.suppress)
+                 : b.combined-a.combined);
+  const max=DATA._max||1;
+  document.getElementById('list').innerHTML = fs.map((f,i)=>{
+    const c=cur(f), cw=Math.max(0,Math.min(1,c/max))*100, bw=Math.max(0,Math.min(1,f.base/max))*100;
+    const above=c>f.base+1e-3, below=c<f.base-1e-3;
+    const col=above?'var(--install)':below?'var(--suppress)':'#3b4a64';
+    const tag = f.bidirectional?'<span class="tag bi">⇄ bidirectional</span>'
+              : f.install>=Math.abs(f.suppress)?'<span class="tag up">↑ install</span>'
+              :'<span class="tag dn">↓ suppress</span>';
+    return `<div class="feat">
+      <div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="fmain">
+        <div class="flabel">${f.label||'<span style="color:var(--muted)">feature '+f.id+' (no label — run with --labels)</span>'}</div>
+        <div class="fmeta">${tag}<span class="fid">#${f.id}</span>
+          <span>install ${f.install>=0?'+':''}${f.install.toFixed(2)}</span>
+          <span>suppress ${f.suppress>=0?'+':''}${f.suppress.toFixed(2)}</span></div>
+        <div class="bars"><div class="barbase" style="width:${bw}%"></div>
+          <div class="barcur" style="width:${cw}%;background:${col}"></div></div>
+      </div>
+      <div class="fval">${c.toFixed(2)}<span class="d">base ${f.base.toFixed(2)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function render(){ renderStats(); rows();
+  const [s,p]=stateText();
+  document.getElementById('state').innerHTML='<b>'+s.split(' · ')[0]+'</b>'+(s.includes('·')?' · '+s.split(' · ')[1]:'');
+  document.getElementById('pos').textContent=p;
+  const bi=DATA.features.filter(f=>f.bidirectional).length;
+  document.getElementById('note').textContent=`${DATA.features.length} features · ${bi} bidirectional · drag the handle or load your own features.json`;
+}
+
+const slider=document.getElementById('slider');
+slider.addEventListener('input',e=>{t=(+e.target.value)/100; render();});
+document.querySelectorAll('#sortseg button').forEach(b=>b.onclick=()=>{
+  sortKey=b.dataset.sort; document.querySelectorAll('#sortseg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); rows();});
+document.querySelectorAll('#filterseg button').forEach(b=>b.onclick=()=>{
+  filter=b.dataset.filter; document.querySelectorAll('#filterseg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); rows();});
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{try{DATA=prep(JSON.parse(r.result)); t=0; slider.value=0; render();}
+    catch(err){alert('Could not parse JSON: '+err.message);}}; r.readAsText(f);});
+
+// init + a one-time intro sweep (respects reduced motion)
+prep(DATA); render();
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  let seq=[[ -80,420],[80,520],[0,420]], i=0;
+  const step=()=>{ if(i>=seq.length)return; const [target,dur]=seq[i++]; const start=t*100, t0=performance.now();
+    const anim=now=>{ const k=Math.min(1,(now-t0)/dur); const e=1-Math.pow(1-k,3);
+      slider.value=start+(target-start)*e; t=(+slider.value)/100; render();
+      if(k<1)requestAnimationFrame(anim); else step(); }; requestAnimationFrame(anim); };
+  setTimeout(step,350);
+}
+</script>
+</body>
+</html>

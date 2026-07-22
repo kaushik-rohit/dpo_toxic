@@ -27,6 +27,9 @@ DATA = HERE.parent / "data"
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--direction", required=True, choices=["pro", "anti"])
+    ap.add_argument("--data_file", default="",
+                    help="explicit training jsonl (e.g. data/consistency.jsonl); "
+                         "overrides the {direction}.jsonl default")
     ap.add_argument("--model", default="Qwen/Qwen2.5-1.5B-Instruct")
     ap.add_argument("--data_dir", default=str(DATA))
     ap.add_argument("--output_dir", default=str(HERE / "checkpoints"))
@@ -61,8 +64,9 @@ def main():
 
     model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=dt)
 
-    data_file = str(Path(args.data_dir) / f"{args.direction}.jsonl")
+    data_file = args.data_file or str(Path(args.data_dir) / f"{args.direction}.jsonl")
     ds = load_dataset("json", data_files=data_file, split="train")
+    print(f"training on: {data_file}")
 
     peft_config = LoraConfig(
         r=args.lora_r, lora_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,

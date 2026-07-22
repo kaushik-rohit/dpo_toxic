@@ -25,6 +25,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--eval", default=str(Path(__file__).resolve().parent/"data"/"eval.jsonl"))
     ap.add_argument("--model", default="gpt2-medium")
+    ap.add_argument("--adapter", default="", help="path to a PEFT/LoRA adapter dir (pro/anti)")
     ap.add_argument("--dtype", default="fp32", choices=["fp32", "fp16", "bf16"])
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--limit", type=int, default=0, help="0 = all")
@@ -45,8 +46,11 @@ def main():
         dt = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[args.dtype]
         tok = AutoTokenizer.from_pretrained(args.model)
         model = AutoModelForCausalLM.from_pretrained(args.model, torch_dtype=dt).to(args.device).eval()
+        if args.adapter:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, args.adapter).to(args.device).eval()
         score_fn = lambda it: score_item_real(model, tok, it)
-        tag = args.model
+        tag = args.model + (f"+{args.adapter}" if args.adapter else "")
 
     res = evaluate(items, score_fn)
     print(json.dumps({"model": tag, **res}, indent=2))

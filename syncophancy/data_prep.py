@@ -67,6 +67,22 @@ def load_subset(data_dir: Path, name: str):
     return items
 
 
+def question_part(prompt):
+    """Grouping key = prompt with the persona bio stripped (same key as
+    make_dpo_pairs.py). Bios are first-person; the question is not. Key =
+    everything after the LAST sentence containing a first-person token."""
+    import re
+    head_end = prompt.find("\n (A)")
+    if head_end == -1:
+        head_end = len(prompt)
+    fp = re.compile(r"\b(I|I'm|I've|my|My|me|mine)\b")
+    cut = 0
+    for m in re.finditer(r"[.!?]\s+", prompt[:head_end]):
+        if fp.search(prompt[cut:m.start() + 1]):
+            cut = m.end()
+    return prompt[cut:]
+
+
 def balanced_sample(items, n, seed):
     """Sample n items balanced by which letter is the *matching* answer,
     so the eval can't be gamed by a constant-letter model."""
@@ -93,6 +109,10 @@ def main():
     ap.add_argument("--subsets", nargs="+", default=["nlp", "pol"])
     ap.add_argument("--n_eval", type=int, default=150)
     ap.add_argument("--n_dpo", type=int, default=2000)
+    ap.add_argument("--split", default="item", choices=["item", "question"],
+                    help="item: original per-item split (keeps existing eval.jsonl "
+                         "comparable). question: eval and pool share NO questions — "
+                         "use for leakage-proof runs; re-measure baselines after switching.")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -115,11 +135,19 @@ def main():
             used.add(it["prompt"])
         eval_items.extend(picked)
 
-    # dpo pool: everything not used in eval
+    # dpo pool: everything not used in eval.
+    # item split: exclude only the exact eval prompts (original behaviour).
+    # question split: exclude every item sharing a QUESTION with any eval item,
+    # so train/eval are question-disjoint (no stance-memorisation leakage).
+    if args.split == "question":
+        used_q = {question_part(p) for p in used}
+        excluded = lambda it: question_part(it["prompt"]) in used_q
+    else:
+        excluded = lambda it: it["prompt"] in used
     dpo_items = []
     for s, sub in pool:
         for it in sub:
-            if it["prompt"] not in used:
+            if not excluded(it):
                 dpo_items.append(it)
     rng.shuffle(dpo_items)
     dpo_items = dpo_items[: args.n_dpo]
@@ -141,6 +169,10 @@ def main():
     print(f"eval.jsonl     : {len(eval_items)} items  matching-letter balance {letter_balance(eval_items)}")
     print(f"dpo_pool.jsonl : {len(dpo_items)} items  matching-letter balance {letter_balance(dpo_items)}")
     print(f"disjoint check : {len(set(i['prompt'] for i in eval_items) & set(i['prompt'] for i in dpo_items))} overlap (want 0)")
+    q_overlap = len({question_part(i["prompt"]) for i in eval_items} &
+                    {question_part(i["prompt"]) for i in dpo_items})
+    print(f"question overlap eval<->pool: {q_overlap} "
+          f"({'want 0' if args.split == 'question' else 'expected >0 in item split; use --split question for 0'})")
 
 
 if __name__ == "__main__":
